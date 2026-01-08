@@ -54,9 +54,9 @@ def calculate_transmittance(wavelength, thicknesses, epsilon_1, epsilon_2):
             n_prev = ns[i-1]
             
         T_interface = np.array([
-            [1/(2*n_prev)*(n_current + n_prev), 1/(2*n_prev)*(n_current - n_prev)],
-            [1/(2*n_prev)*(n_current - n_prev), 1/(2*n_prev)*(n_current + n_prev)]
-        ])
+            [(n_current + n_prev), (n_current - n_prev)],
+            [(n_current - n_prev), (n_current + n_prev)]
+        ]) * 1/(2*n_current)
         
         # Propagation matrix
         P = np.array([
@@ -65,19 +65,19 @@ def calculate_transmittance(wavelength, thicknesses, epsilon_1, epsilon_2):
         ])
         
         # Update total matrix   P2 T2 P1 T1  
-        M_total = M_total  @ P @ T_interface
+        M_total = P @ T_interface @  M_total 
     
     # Final interface to substrate
     nf = ns[-1] # final layer n 
     T_final = np.array([
-        [1/(2 * nf)*(n_sub + nf), 1/(2*nf)*(n_sub - nf)],
-        [1/(2 * nf)*(n_sub - nf), 1/(2*nf)*(n_sub + nf)]
-    ])
+        [(n_sub + nf), (n_sub - nf)],
+        [(n_sub - nf), (n_sub + nf)]
+    ]) * 1 / (2*n_sub)
     
     M_total = T_final @ M_total 
     
     # Transmission coefficient
-    t = 1 / M_total[0,0] # python begins with 0
+    t = 1 / M_total[1,1] # 1/M22 python begins with 0
     
     # Transmittance T = np.abs(t)**2 * n_sub / n0
     T = np.abs(t)**2 * n_sub / n0
